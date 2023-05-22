@@ -1,0 +1,1 @@
+{"version":3,"file":"definitions.js","sourceRoot":"","sources":["../../src/definitions.ts"],"names":[],"mappings":"","sourcesContent":["export interface PostData {\n  url: string;\n  body: Record<string,string>;\n  headers?: Record<string,string>;\n}\n\nexport interface CapacitorPosturlPlugin {\n  posturl(data: PostData): Promise<void>;\n}\n"]}
