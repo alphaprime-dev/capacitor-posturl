@@ -1,4 +1,3 @@
-
 import Foundation
 import Capacitor
 import UIKit
@@ -6,10 +5,14 @@ import WebKit
 
 @objc public class CapacitorPosturl: NSObject, WKNavigationDelegate {
     private var urlString: String?
+    private var callbackUrl: URL?
 
     @objc public func posturl(webView:WKWebView, body: [String: Any], headers: [String: Any], url: String) {
         DispatchQueue.main.async {
             self.urlString = url
+            if let callbackUrlString = body["callbackUrl"] as? String {
+                self.callbackUrl = URL(string: callbackUrlString)
+            }
             webView.navigationDelegate = self
 
             if let url = URL(string: url) {
@@ -28,7 +31,7 @@ import WebKit
 
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let url = navigationAction.request.url {
-            if self.urlString != nil && url.absoluteString.contains(self.urlString!) {
+            if url.host == URL(string: self.urlString ?? "")?.host || url == self.callbackUrl {
                 decisionHandler(.allow)
             } else {
                 decisionHandler(.cancel)
@@ -49,7 +52,4 @@ import WebKit
         }
         return data.map { String($0) }.joined(separator: "&")
     }
-
-
-
 }
