@@ -3,37 +3,22 @@ package com.capacitor.posturl;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
+import androidx.annotation.NonNull;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.io.IOException;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Cookie;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import okhttp3.*;
 
 
 public class CapacitorPosturl {
-    public void posturl(WebView webView, HashMap<String,String> postData, HashMap<String,String> headers, String url) {
-        String urlParameters = createPostData(postData);
-        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create(urlParameters, mediaType);
-        Request.Builder requestBuilder = new Request.Builder()
-                .url(url)
-                .post(body);
-
-        for (Map.Entry<String, String> header : headers.entrySet()) {
-            requestBuilder.addHeader(header.getKey(), header.getValue());
-        }
-        Request request = requestBuilder.build();
+    public void posturl(WebView webView, HashMap<String, String> postData, HashMap<String, String> headers, String url) {
+        final byte[] postDataBytes = getPostDataBytes(postData);
+        Request request = getRequest(headers, url, postDataBytes);
         OkHttpClient client = new OkHttpClient();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -44,54 +29,67 @@ public class CapacitorPosturl {
             @Override
             public void onResponse(Call call, final Response response) throws IOException {
                 if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response.body().string());
+                    throw new IOException("Unexpected code " + response);
                 } else {
-                    List<Cookie> cookies = Cookie.parseAll(request.url(), response.headers());
-                    StringBuilder cookieString = new StringBuilder();
-                    for (int i = 0; i < cookies.size(); i++) {
-                        if (i > 0) {
-                            cookieString.append("; ");
-                        }
-                        cookieString.append(cookies.get(i).name()).append("=").append(cookies.get(i).value());
-                    }
-
-                    final String finalCookieString = cookieString.toString();
-                    String urlParameters = createPostData(postData);
-                    byte[] postDataBytes = new byte[0];
-                    try {
-                        postDataBytes = urlParameters.getBytes("UTF-8");
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
-                    byte[] finalPostDataBytes = postDataBytes;
-                    webView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            CookieManager cookieManager = CookieManager.getInstance();
-                            cookieManager.setCookie(url, finalCookieString);
-                            webView.postUrl(url, finalPostDataBytes);
-                        }
+                    webView.post(() -> {
+                        final String cookieString = getCookieString(response, request);
+                        CookieManager cookieManager = CookieManager.getInstance();
+                        cookieManager.setCookie(url, cookieString);
+                        webView.postUrl(url, postDataBytes);
                     });
                 }
             }
         });
     }
 
-    private String createPostData(Map<String, String> params) {
-        StringBuilder result = new StringBuilder();
+    private static byte[] getPostDataBytes(HashMap<String, String> postData) {
+        StringBuilder postDataStringBuilder = new StringBuilder();
 
-        try {
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                if (result.length() != 0) result.append('&');
-
-                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-                result.append('=');
-                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        for (Map.Entry<String, String> entry : postData.entrySet()) {
+            if (postDataStringBuilder.length() > 0) {
+                postDataStringBuilder.append("&");
             }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            try {
+                postDataStringBuilder.append(URLEncoder.encode(entry.getKey(), "UTF-8"))
+                        .append("=")
+                        .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
         }
 
-        return result.toString();
+        final byte[] postDataBytes = postDataStringBuilder.toString().getBytes();
+        return postDataBytes;
     }
+
+    @NonNull
+    private static Request getRequest(HashMap<String, String> headers, String url, byte[] postDataBytes) {
+        RequestBody body = RequestBody.create(postDataBytes, MediaType.parse("application/x-www-form-urlencoded"));
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url)
+                .post(body);
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            requestBuilder.addHeader(header.getKey(), header.getValue());
+        }
+        Request request = requestBuilder.build();
+        return request;
+    }
+
+
+    @NonNull
+    private static String getCookieString(Response response, Request request) {
+        List<Cookie> cookies = Cookie.parseAll(request.url(), response.headers());
+        StringBuilder cookieString = new StringBuilder();
+        for (int i = 0; i < cookies.size(); i++) {
+            if (i > 0) {
+                cookieString.append("; ");
+            }
+            cookieString.append(cookies.get(i).name()).append("=").append(cookies.get(i).value());
+        }
+
+        final String finalCookieString = cookieString.toString();
+        return finalCookieString;
+    }
+
+
 }
