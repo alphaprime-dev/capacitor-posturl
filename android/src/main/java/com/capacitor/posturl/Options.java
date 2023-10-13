@@ -1,4 +1,4 @@
-package ee.forgr.capacitor_inappbrowser;
+package com.capacitor.posturl;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PluginCall;

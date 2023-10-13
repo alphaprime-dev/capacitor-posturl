@@ -60,9 +60,10 @@ open class WKWebViewController: UIViewController {
         self.initWebview()
     }
 
-    public init(url: URL, headers: [String: String]) {
+    public init(url: URL, body: String, headers:[String:String]) {
         super.init(nibName: nil, bundle: nil)
         self.source = .remote(url)
+        self.setBody(body: body)
         self.setHeaders(headers: headers)
         self.initWebview()
     }
@@ -77,7 +78,8 @@ open class WKWebViewController: UIViewController {
     open var bypassedSSLHosts: [String]?
     open var cookies: [HTTPCookie]?
     open var headers: [String: String]?
-    open var capBrowserPlugin: InAppBrowserPlugin?
+    open var body:String?
+    open var capBrowserPlugin: CapacitorPosturlPlugin?
     var shareDisclaimer: [String: Any]?
     var shareSubject: String?
     var didpageInit = false
@@ -90,16 +92,12 @@ open class WKWebViewController: UIViewController {
     open var closeModalOk = ""
     open var closeModalCancel = ""
 
-    func setHeaders(headers: [String: String]) {
+    func setBody(body: String) {
+        self.body = body
+    }
+    
+    func setHeaders(headers:[String:String]){
         self.headers = headers
-        let lowercasedHeaders = headers.mapKeys { $0.lowercased() }
-        let userAgent = lowercasedHeaders["user-agent"]
-        self.headers?.removeValue(forKey: "User-Agent")
-        self.headers?.removeValue(forKey: "user-agent")
-
-        if let userAgent = userAgent {
-            self.customUserAgent = userAgent
-        }
     }
 
     internal var customUserAgent: String? {
@@ -242,6 +240,15 @@ open class WKWebViewController: UIViewController {
         }
 
         //        self.restateViewHeight()
+        
+        let closeScript = """
+            window.close = function() {
+                window.webkit.messageHandlers.closeWindow.postMessage(null);
+            }
+        """
+        let userScript = WKUserScript(source: closeScript, injectionTime: .atDocumentEnd, forMainFrameOnly: false)
+        webView.configuration.userContentController.addUserScript(userScript)
+        webView.configuration.userContentController.add(self, name: "closeWindow")
 
         if let s = self.source {
             self.load(source: s)
@@ -397,6 +404,10 @@ fileprivate extension WKWebViewController {
     }
     func createRequest(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
+        request.timeoutInterval = 3.0
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = self.body!.data(using: .utf8)
 
         // Set up headers
         if let headers = headers {
@@ -722,10 +733,18 @@ fileprivate extension WKWebViewController {
     func canRotate() {}
 }
 
-// MARK: - WKUIDelegate
-extension WKWebViewController: WKUIDelegate {
-
+// MARK: - WKScriptMessageHandler
+extension WKWebViewController: WKScriptMessageHandler {
+    public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "closeWindow" {
+            self.capBrowserPlugin?.notifyListeners("closeEvent", data: ["url": webView?.url?.absoluteString ?? ""])
+            self.dismiss(animated: true, completion: nil)
+        }
+    }
 }
+
+// MARK: - WKUIDelegate
+extension WKWebViewController: WKUIDelegate {}
 
 // MARK: - WKNavigationDelegate
 extension WKWebViewController: WKNavigationDelegate {

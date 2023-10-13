@@ -22,6 +22,108 @@
           "PostData"
         ],
         "slug": "posturl"
+      },
+      {
+        "name": "addListener",
+        "signature": "(eventName: \"urlChangeEvent\", listenerFunc: UrlChangeListener) => Promise<PluginListenerHandle> & PluginListenerHandle",
+        "parameters": [
+          {
+            "name": "eventName",
+            "docs": "",
+            "type": "'urlChangeEvent'"
+          },
+          {
+            "name": "listenerFunc",
+            "docs": "",
+            "type": "UrlChangeListener"
+          }
+        ],
+        "returns": "Promise<PluginListenerHandle> & PluginListenerHandle",
+        "tags": [
+          {
+            "name": "since",
+            "text": "0.0.1"
+          }
+        ],
+        "docs": "Listen for url change",
+        "complexTypes": [
+          "PluginListenerHandle",
+          "UrlChangeListener"
+        ],
+        "slug": "addlistenerurlchangeevent"
+      },
+      {
+        "name": "addListener",
+        "signature": "(eventName: \"closeEvent\", listenerFunc: UrlChangeListener) => Promise<PluginListenerHandle> & PluginListenerHandle",
+        "parameters": [
+          {
+            "name": "eventName",
+            "docs": "",
+            "type": "'closeEvent'"
+          },
+          {
+            "name": "listenerFunc",
+            "docs": "",
+            "type": "UrlChangeListener"
+          }
+        ],
+        "returns": "Promise<PluginListenerHandle> & PluginListenerHandle",
+        "tags": [
+          {
+            "name": "since",
+            "text": "0.4.0"
+          }
+        ],
+        "docs": "Listen for close click",
+        "complexTypes": [
+          "PluginListenerHandle",
+          "UrlChangeListener"
+        ],
+        "slug": "addlistenercloseevent"
+      },
+      {
+        "name": "addListener",
+        "signature": "(eventName: \"confirmBtnClicked\", listenerFunc: ConfirmBtnListener) => Promise<PluginListenerHandle> & PluginListenerHandle",
+        "parameters": [
+          {
+            "name": "eventName",
+            "docs": "",
+            "type": "'confirmBtnClicked'"
+          },
+          {
+            "name": "listenerFunc",
+            "docs": "",
+            "type": "ConfirmBtnListener"
+          }
+        ],
+        "returns": "Promise<PluginListenerHandle> & PluginListenerHandle",
+        "tags": [
+          {
+            "name": "since",
+            "text": "0.0.1"
+          }
+        ],
+        "docs": "Will be triggered when user clicks on confirm button when disclaimer is required, works only on iOS",
+        "complexTypes": [
+          "PluginListenerHandle",
+          "ConfirmBtnListener"
+        ],
+        "slug": "addlistenerconfirmbtnclicked"
+      },
+      {
+        "name": "removeAllListeners",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "1.0.0"
+          }
+        ],
+        "docs": "Remove all listeners for this plugin.",
+        "complexTypes": [],
+        "slug": "removealllisteners"
       }
     ],
     "properties": []
@@ -48,7 +150,7 @@
           "complexTypes": [
             "Record"
           ],
-          "type": "Record<string,string>"
+          "type": "Record<string, string>"
         },
         {
           "name": "headers",
@@ -57,12 +159,412 @@
           "complexTypes": [
             "Record"
           ],
-          "type": "Record<string,string>"
+          "type": "Record<string, string>"
+        },
+        {
+          "name": "webviewOptions",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "OpenWebViewOptions"
+          ],
+          "type": "OpenWebViewOptions"
+        }
+      ]
+    },
+    {
+      "name": "OpenWebViewOptions",
+      "slug": "openwebviewoptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "shareDisclaimer",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "share options",
+          "complexTypes": [
+            "DisclaimerOptions"
+          ],
+          "type": "DisclaimerOptions"
+        },
+        {
+          "name": "toolbarType",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            },
+            {
+              "text": "ToolBarType.DEFAULT",
+              "name": "default"
+            }
+          ],
+          "docs": "Toolbar type",
+          "complexTypes": [
+            "ToolBarType"
+          ],
+          "type": "ToolBarType"
+        },
+        {
+          "name": "shareSubject",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "Share subject",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "title",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            },
+            {
+              "text": "'New Window'",
+              "name": "default"
+            }
+          ],
+          "docs": "Title of the browser",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "backgroundColor",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            },
+            {
+              "text": "BackgroundColor.BLACK",
+              "name": "default"
+            }
+          ],
+          "docs": "Background color of the browser, only on IOS",
+          "complexTypes": [
+            "BackgroundColor"
+          ],
+          "type": "BackgroundColor"
+        },
+        {
+          "name": "isPresentAfterPageLoad",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            },
+            {
+              "text": "false",
+              "name": "default"
+            }
+          ],
+          "docs": "Open url in a new window fullscreen\n\nisPresentAfterPageLoad: if true, the browser will be presented after the page is loaded, if false, the browser will be presented immediately.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "showReloadButton",
+          "tags": [
+            {
+              "text": "1.0.15",
+              "name": "since"
+            },
+            {
+              "text": "false",
+              "name": "default"
+            }
+          ],
+          "docs": "Shows a reload button that reloads the web page",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "closeModal",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            },
+            {
+              "text": "false",
+              "name": "default"
+            }
+          ],
+          "docs": "CloseModal: if true a confirm will be displayed when user clicks on close button, if false the browser will be closed immediately.",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "closeModalTitle",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            },
+            {
+              "text": "'Close'",
+              "name": "default"
+            }
+          ],
+          "docs": "CloseModalTitle: title of the confirm when user clicks on close button, only on IOS",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "closeModalDescription",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            },
+            {
+              "text": "'Are you sure you want to close this window?'",
+              "name": "default"
+            }
+          ],
+          "docs": "CloseModalDescription: description of the confirm when user clicks on close button, only on IOS",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "closeModalOk",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            },
+            {
+              "text": "'Close'",
+              "name": "default"
+            }
+          ],
+          "docs": "CloseModalOk: text of the confirm button when user clicks on close button, only on IOS",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "closeModalCancel",
+          "tags": [
+            {
+              "text": "1.1.0",
+              "name": "since"
+            },
+            {
+              "text": "'Cancel'",
+              "name": "default"
+            }
+          ],
+          "docs": "CloseModalCancel: text of the cancel button when user clicks on close button, only on IOS",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "visibleTitle",
+          "tags": [
+            {
+              "text": "1.2.5",
+              "name": "since"
+            },
+            {
+              "text": "true",
+              "name": "default"
+            }
+          ],
+          "docs": "visibleTitle: if true the website title would be shown else shown empty",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        },
+        {
+          "name": "toolbarColor",
+          "tags": [
+            {
+              "text": "1.2.5",
+              "name": "since"
+            },
+            {
+              "text": "'#ffffff''",
+              "name": "default"
+            }
+          ],
+          "docs": "toolbarColor: color of the toolbar in hex format",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "showArrow",
+          "tags": [
+            {
+              "text": "1.2.5",
+              "name": "since"
+            },
+            {
+              "text": "false",
+              "name": "default"
+            }
+          ],
+          "docs": "showArrow: if true an arrow would be shown instead of cross for closing the window",
+          "complexTypes": [],
+          "type": "boolean | undefined"
+        }
+      ]
+    },
+    {
+      "name": "DisclaimerOptions",
+      "slug": "disclaimeroptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "title",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "confirmBtn",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "cancelBtn",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PluginListenerHandle",
+      "slug": "pluginlistenerhandle",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "remove",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "() => Promise<void>"
+        }
+      ]
+    },
+    {
+      "name": "UrlEvent",
+      "slug": "urlevent",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "url",
+          "tags": [
+            {
+              "text": "0.0.1",
+              "name": "since"
+            }
+          ],
+          "docs": "Emit when the url changes",
+          "complexTypes": [],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "BtnEvent",
+      "slug": "btnevent",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "url",
+          "tags": [
+            {
+              "text": "0.0.1",
+              "name": "since"
+            }
+          ],
+          "docs": "Emit when a button is clicked.",
+          "complexTypes": [],
+          "type": "string"
         }
       ]
     }
   ],
-  "enums": [],
+  "enums": [
+    {
+      "name": "ToolBarType",
+      "slug": "toolbartype",
+      "members": [
+        {
+          "name": "ACTIVITY",
+          "value": "\"activity\"",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "NAVIGATION",
+          "value": "\"navigation\"",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "BLANK",
+          "value": "\"blank\"",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "DEFAULT",
+          "value": "\"\"",
+          "tags": [],
+          "docs": ""
+        }
+      ]
+    },
+    {
+      "name": "BackgroundColor",
+      "slug": "backgroundcolor",
+      "members": [
+        {
+          "name": "WHITE",
+          "value": "\"white\"",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "BLACK",
+          "value": "\"black\"",
+          "tags": [],
+          "docs": ""
+        }
+      ]
+    }
+  ],
   "typeAliases": [
     {
       "name": "Record",
@@ -74,6 +576,32 @@
           "complexTypes": [
             "K",
             "T"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "UrlChangeListener",
+      "slug": "urlchangelistener",
+      "docs": "",
+      "types": [
+        {
+          "text": "(state: UrlEvent): void",
+          "complexTypes": [
+            "UrlEvent"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ConfirmBtnListener",
+      "slug": "confirmbtnlistener",
+      "docs": "",
+      "types": [
+        {
+          "text": "(state: BtnEvent): void",
+          "complexTypes": [
+            "BtnEvent"
           ]
         }
       ]

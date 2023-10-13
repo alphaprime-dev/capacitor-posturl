@@ -1,4 +1,4 @@
-package ee.forgr.capacitor_inappbrowser;
+package com.capacitor.posturl;
 
 public interface WebViewCallbacks {
   public void urlChangeEvent(String url);
