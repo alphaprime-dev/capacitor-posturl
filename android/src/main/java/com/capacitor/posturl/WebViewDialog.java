@@ -1,4 +1,4 @@
-package ee.forgr.capacitor_inappbrowser;
+package com.capacitor.posturl;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -17,11 +17,9 @@ import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toolbar;
+
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 public class WebViewDialog extends Dialog {
 
@@ -30,6 +28,10 @@ public class WebViewDialog extends Dialog {
   private Options _options;
   private Context _context;
   private boolean isInitialized = false;
+
+  public WebView getWebView() {
+    return _webView;
+  }
 
   public WebViewDialog(Context context, int theme, Options options) {
     super(context, theme);
@@ -46,14 +48,14 @@ public class WebViewDialog extends Dialog {
         WindowManager.LayoutParams.FLAG_FULLSCREEN,
         WindowManager.LayoutParams.FLAG_FULLSCREEN
       );
-    setContentView(R.layout.activity_browser);
+    setContentView(com.capacitor.posturl.R.layout.activity_browser);
     getWindow()
       .setLayout(
         WindowManager.LayoutParams.MATCH_PARENT,
         WindowManager.LayoutParams.MATCH_PARENT
       );
 
-    this._webView = findViewById(R.id.browser_view);
+    this._webView = findViewById(com.capacitor.posturl.R.id.browser_view);
 
     _webView.getSettings().setJavaScriptEnabled(true);
     _webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
@@ -65,22 +67,6 @@ public class WebViewDialog extends Dialog {
     _webView.getSettings().setLoadWithOverviewMode(true);
     _webView.getSettings().setUseWideViewPort(true);
 
-    Map<String, String> requestHeaders = new HashMap<>();
-    if (_options.getHeaders() != null) {
-      Iterator<String> keys = _options.getHeaders().keys();
-      while (keys.hasNext()) {
-        String key = keys.next();
-        if (TextUtils.equals(key.toLowerCase(), "user-agent")) {
-          _webView
-            .getSettings()
-            .setUserAgentString(_options.getHeaders().getString(key));
-        } else {
-          requestHeaders.put(key, _options.getHeaders().getString(key));
-        }
-      }
-    }
-
-    _webView.loadUrl(this._options.getUrl(), requestHeaders);
     _webView.requestFocus();
     _webView.requestFocusFromTouch();
 
@@ -101,26 +87,8 @@ public class WebViewDialog extends Dialog {
     return _webView.getUrl();
   }
 
-  public void setUrl(String url) {
-    Map<String, String> requestHeaders = new HashMap<>();
-    if (_options.getHeaders() != null) {
-      Iterator<String> keys = _options.getHeaders().keys();
-      while (keys.hasNext()) {
-        String key = keys.next();
-        if (TextUtils.equals(key.toLowerCase(), "user-agent")) {
-          _webView
-            .getSettings()
-            .setUserAgentString(_options.getHeaders().getString(key));
-        } else {
-          requestHeaders.put(key, _options.getHeaders().getString(key));
-        }
-      }
-    }
-    _webView.loadUrl(url, requestHeaders);
-  }
-
   private void setTitle(String newTitleText) {
-    TextView textView = (TextView) _toolbar.findViewById(R.id.titleText);
+    TextView textView = (TextView) _toolbar.findViewById(com.capacitor.posturl.R.id.titleText);
     if (_options.getVisibleTitle()) {
       textView.setText(newTitleText);
     } else {
@@ -142,7 +110,7 @@ public class WebViewDialog extends Dialog {
     _toolbar.findViewById(R.id.closeButton).setBackgroundColor(color);
     _toolbar.findViewById(R.id.reloadButton).setBackgroundColor(color);
 
-    if (!TextUtils.isEmpty(_options.getTitle())) {
+     if (!TextUtils.isEmpty(_options.getTitle())) {
       this.setTitle(_options.getTitle());
     } else {
       try {
@@ -153,7 +121,8 @@ public class WebViewDialog extends Dialog {
       }
     }
 
-    View backButton = _toolbar.findViewById(R.id.backButton);
+
+    View backButton = _toolbar.findViewById(com.capacitor.posturl.R.id.backButton);
     backButton.setOnClickListener(
       new View.OnClickListener() {
         @Override
@@ -165,7 +134,7 @@ public class WebViewDialog extends Dialog {
       }
     );
 
-    View forwardButton = _toolbar.findViewById(R.id.forwardButton);
+    View forwardButton = _toolbar.findViewById(com.capacitor.posturl.R.id.forwardButton);
     forwardButton.setOnClickListener(
       new View.OnClickListener() {
         @Override
@@ -177,7 +146,7 @@ public class WebViewDialog extends Dialog {
       }
     );
 
-    View closeButton = _toolbar.findViewById(R.id.closeButton);
+    View closeButton = _toolbar.findViewById(com.capacitor.posturl.R.id.closeButton);
     closeButton.setOnClickListener(
       new View.OnClickListener() {
         @Override
@@ -189,7 +158,7 @@ public class WebViewDialog extends Dialog {
               .setMessage(_options.getCloseModalDescription())
               .setPositiveButton(
                 _options.getCloseModalOk(),
-                new DialogInterface.OnClickListener() {
+                new OnClickListener() {
                   public void onClick(DialogInterface dialog, int which) {
                     // Close button clicked, do something
                     dismiss();
@@ -208,11 +177,11 @@ public class WebViewDialog extends Dialog {
     );
 
     if (_options.showArrow()) {
-      closeButton.setBackgroundResource(R.drawable.arrow_forward_enabled);
+      closeButton.setBackgroundResource(com.capacitor.posturl.R.drawable.arrow_forward_enabled);
     }
 
     if (_options.getShowReloadButton()) {
-      View reloadButton = _toolbar.findViewById(R.id.reloadButton);
+      View reloadButton = _toolbar.findViewById(com.capacitor.posturl.R.id.reloadButton);
       reloadButton.setVisibility(View.VISIBLE);
       reloadButton.setOnClickListener(
         new View.OnClickListener() {
@@ -225,16 +194,16 @@ public class WebViewDialog extends Dialog {
     }
 
     if (TextUtils.equals(_options.getToolbarType(), "activity")) {
-      _toolbar.findViewById(R.id.forwardButton).setVisibility(View.GONE);
-      _toolbar.findViewById(R.id.backButton).setVisibility(View.GONE);
+      _toolbar.findViewById(com.capacitor.posturl.R.id.forwardButton).setVisibility(View.GONE);
+      _toolbar.findViewById(com.capacitor.posturl.R.id.backButton).setVisibility(View.GONE);
       //TODO: Add share button functionality
     } else if (TextUtils.equals(_options.getToolbarType(), "navigation")) {
       //TODO: Remove share button when implemented
     } else if (TextUtils.equals(_options.getToolbarType(), "blank")) {
       _toolbar.setVisibility(View.GONE);
     } else {
-      _toolbar.findViewById(R.id.forwardButton).setVisibility(View.GONE);
-      _toolbar.findViewById(R.id.backButton).setVisibility(View.GONE);
+      _toolbar.findViewById(com.capacitor.posturl.R.id.forwardButton).setVisibility(View.GONE);
+      _toolbar.findViewById(com.capacitor.posturl.R.id.backButton).setVisibility(View.GONE);
     }
   }
 
@@ -258,8 +227,10 @@ public class WebViewDialog extends Dialog {
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
           super.onPageStarted(view, url, favicon);
           try {
-            URI uri = new URI(url);
-            setTitle(uri.getHost());
+            if (TextUtils.isEmpty(_options.getTitle())) {
+              URI uri = new URI(url);
+              setTitle(uri.getHost());
+            }
           } catch (URISyntaxException e) {
             // Do nothing
           }
@@ -289,21 +260,21 @@ public class WebViewDialog extends Dialog {
             }
           }
 
-          ImageButton backButton = _toolbar.findViewById(R.id.backButton);
+          ImageButton backButton = _toolbar.findViewById(com.capacitor.posturl.R.id.backButton);
           if (_webView.canGoBack()) {
-            backButton.setImageResource(R.drawable.arrow_back_enabled);
+            backButton.setImageResource(com.capacitor.posturl.R.drawable.arrow_back_enabled);
             backButton.setEnabled(true);
           } else {
-            backButton.setImageResource(R.drawable.arrow_back_disabled);
+            backButton.setImageResource(com.capacitor.posturl.R.drawable.arrow_back_disabled);
             backButton.setEnabled(false);
           }
 
-          ImageButton forwardButton = _toolbar.findViewById(R.id.forwardButton);
+          ImageButton forwardButton = _toolbar.findViewById(com.capacitor.posturl.R.id.forwardButton);
           if (_webView.canGoForward()) {
-            forwardButton.setImageResource(R.drawable.arrow_forward_enabled);
+            forwardButton.setImageResource(com.capacitor.posturl.R.drawable.arrow_forward_enabled);
             forwardButton.setEnabled(true);
           } else {
-            forwardButton.setImageResource(R.drawable.arrow_forward_disabled);
+            forwardButton.setImageResource(com.capacitor.posturl.R.drawable.arrow_forward_disabled);
             forwardButton.setEnabled(false);
           }
 
