@@ -47,6 +47,13 @@ public class CapacitorPosturlPlugin extends Plugin {
         String url = pluginCall.getString("url");
         HashMap<String, String> body = jsObjectToStringHashMap(bodyJSObject);
         HashMap<String, String> headers = jsObjectToStringHashMap(headersJSObject);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                String userAgent = bridge.getWebView().getSettings().getUserAgentString();
+                headers.put("User-Agent", userAgent);
+            }
+        });
 
         final byte[] postDataBytes = getPostDataBytes(body);
         Request request = getRequest(headers, url, postDataBytes);
