@@ -3,6 +3,8 @@ package com.capacitor.posturl;
 import android.content.Context;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
@@ -21,7 +23,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Cookie;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -32,20 +33,117 @@ import okhttp3.Response;
 public class CapacitorPosturlPlugin extends Plugin {
 
     @PluginMethod
-    public void posturl(PluginCall pluginCall) {
+    public void posturl(final PluginCall pluginCall) {
         JSObject bodyJSObject = pluginCall.getObject("body");
         JSObject headersJSObject = pluginCall.getObject("headers", new JSObject());
         JSObject webviewOptionsJSObject = pluginCall.getObject("webviewOptions", null);
 
-        String url = pluginCall.getString("url");
-        HashMap<String, String> body = jsObjectToStringHashMap(bodyJSObject);
-        HashMap<String, String> headers = jsObjectToStringHashMap(headersJSObject);
+        final String url = pluginCall.getString("url");
+        if (url == null) {
+            pluginCall.reject("url must be provided.");
+            return;
+        }
+        final HashMap<String, String> body = jsObjectToStringHashMap(bodyJSObject);
+        final HashMap<String, String> headers = jsObjectToStringHashMap(headersJSObject);
 
-        getActivity()
-            .runOnUiThread(
-                new Runnable() {
-                    @Override
-                    public void run() {
+        if (webviewOptionsJSObject != null) {
+            getActivity()
+                .runOnUiThread(
+                    () -> {
+                        final byte[] postDataBytes = getPostDataBytes(body);
+
+                        String userAgent = bridge.getWebView().getSettings().getUserAgentString();
+                        headers.put("User-Agent", userAgent);
+
+                        Options options = getOptions(webviewOptionsJSObject);
+                        options.setPluginCall(pluginCall);
+                        WebViewDialog webViewDialog = getWebViewDialog(options, getContext());
+                        WebView webView = webViewDialog.getWebView();
+
+                        webView.addJavascriptInterface(
+                            new Object() {
+                                @JavascriptInterface
+                                public void closeWindow() {
+                                    notifyListeners("closeEvent", new JSObject().put("url", url));
+                                    webViewDialog.dismiss();
+                                }
+                            },
+                            "AndroidInterface"
+                        );
+
+                        webView.setWebViewClient(
+                            new WebViewClient() {
+                                private boolean isInitialPostRequestHandled = false;
+
+                                @Override
+                                public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                                    if (
+                                        !isInitialPostRequestHandled &&
+                                        request.getMethod().equalsIgnoreCase("POST") &&
+                                        request.getUrl().toString().equalsIgnoreCase(url)
+                                    ) {
+                                        isInitialPostRequestHandled = true;
+                                        try {
+                                            OkHttpClient client = new OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).build();
+                                            RequestBody requestBody = RequestBody.create(postDataBytes, MediaType.parse("application/x-www-form-urlencoded"));
+
+                                            Request.Builder requestBuilder = new Request.Builder().url(url).post(requestBody);
+                                            for (Map.Entry<String, String> header : headers.entrySet()) {
+                                                requestBuilder.addHeader(header.getKey(), header.getValue());
+                                            }
+                                            Request okHttpRequest = requestBuilder.build();
+
+                                            Response response = client.newCall(okHttpRequest).execute();
+
+                                            List<String> cookieHeaders = response.headers("Set-Cookie");
+                                            CookieManager cookieManager = CookieManager.getInstance();
+                                            for (String cookie : cookieHeaders) {
+                                                cookieManager.setCookie(url, cookie);
+                                            }
+                                            cookieManager.flush();
+
+                                            Map<String, String> responseHeadersMap = new HashMap<>();
+                                            for (String name : response.headers().names()) {
+                                                responseHeadersMap.put(name, response.headers().get(name));
+                                            }
+
+                                            return new WebResourceResponse(
+                                                response.header("content-type", "text/html; charset=utf-8").split(";")[0].trim(),
+                                                response.header("content-encoding", "utf-8"),
+                                                response.code(),
+                                                response.message(),
+                                                responseHeadersMap,
+                                                response.body().byteStream()
+                                            );
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                            getActivity().runOnUiThread(() -> pluginCall.reject("Request failed: " + e.getMessage()));
+                                            return null;
+                                        }
+                                    }
+                                    return super.shouldInterceptRequest(view, request);
+                                }
+
+                                @Override
+                                public void onPageFinished(WebView view, String finishedUrl) {
+                                    super.onPageFinished(view, finishedUrl);
+                                    view.loadUrl(
+                                        "javascript:(function() {" +
+                                        "window.close = function() {" +
+                                        "    AndroidInterface.closeWindow();" +
+                                        "};" +
+                                        "})()"
+                                    );
+                                }
+                            }
+                        );
+                        webView.postUrl(url, postDataBytes);
+                    }
+                );
+        } else {
+            getActivity()
+                .runOnUiThread(
+                    () -> {
                         String userAgent = bridge.getWebView().getSettings().getUserAgentString();
                         headers.put("User-Agent", userAgent);
 
@@ -58,80 +156,44 @@ public class CapacitorPosturlPlugin extends Plugin {
                             .enqueue(
                                 new Callback() {
                                     @Override
-                                    public void onFailure(Call call, IOException e) {
+                                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
                                         e.printStackTrace();
                                         pluginCall.reject(e.getMessage());
                                     }
 
                                     @Override
-                                    public void onResponse(Call call, final Response response) throws IOException {
+                                    public void onResponse(@NonNull Call call, @NonNull final Response response) {
                                         if (!response.isSuccessful()) {
                                             pluginCall.reject("Unexpected code " + response);
                                         } else {
-                                            if (webviewOptionsJSObject != null) {
-                                                getActivity()
-                                                    .runOnUiThread(
-                                                        () -> {
-                                                            Options options = getOptions(webviewOptionsJSObject);
-                                                            options.setPluginCall(pluginCall);
-                                                            WebViewDialog webViewDialog = getWebViewDialog(options, getContext());
-                                                            WebView webView = webViewDialog.getWebView();
-                                                            webView.addJavascriptInterface(
-                                                                new Object() {
-                                                                    @JavascriptInterface
-                                                                    public void closeWindow() {
-                                                                        notifyListeners("closeEvent", new JSObject().put("url", url));
-                                                                        webViewDialog.dismiss();
-                                                                    }
-                                                                },
-                                                                "AndroidInterface"
-                                                            );
+                                            List<String> cookieHeaders = response.headers("Set-Cookie");
 
-                                                            webView.setWebViewClient(
-                                                                new WebViewClient() {
-                                                                    @Override
-                                                                    public void onPageFinished(WebView view, String url) {
-                                                                        super.onPageFinished(view, url);
-                                                                        view.loadUrl(
-                                                                            "javascript:(function() {" +
-                                                                            "window.close = function() {" +
-                                                                            "    AndroidInterface.closeWindow();" +
-                                                                            "};" +
-                                                                            "})()"
-                                                                        );
-                                                                    }
-                                                                }
-                                                            );
-
-                                                            final String cookieString = getCookieString(response, request);
-                                                            CookieManager cookieManager = CookieManager.getInstance();
-                                                            cookieManager.setCookie(url, cookieString);
-                                                            webView.postUrl(url, postDataBytes);
-                                                        }
-                                                    );
-                                            } else {
-                                                WebView webview = bridge.getWebView();
-                                                webview.post(
-                                                    () -> {
-                                                        final String cookieString = getCookieString(response, request);
-                                                        CookieManager cookieManager = CookieManager.getInstance();
-                                                        cookieManager.setCookie(url, cookieString);
-                                                        webview.postUrl(url, postDataBytes);
+                                            WebView webview = bridge.getWebView();
+                                            webview.post(
+                                                () -> {
+                                                    CookieManager cookieManager = CookieManager.getInstance();
+                                                    for (String cookie : cookieHeaders) {
+                                                        cookieManager.setCookie(url, cookie);
                                                     }
-                                                );
-                                            }
+                                                    cookieManager.flush();
+                                                    webview.postUrl(url, postDataBytes);
+                                                }
+                                            );
                                             pluginCall.resolve();
                                         }
                                     }
                                 }
                             );
                     }
-                }
-            );
+                );
+        }
     }
 
     private static HashMap<String, String> jsObjectToStringHashMap(JSObject object) {
         HashMap<String, String> map = new HashMap<>();
+        if (object == null) {
+            return map;
+        }
         Iterator<String> keysItr = object.keys();
         while (keysItr.hasNext()) {
             String key = keysItr.next();
@@ -181,6 +243,9 @@ public class CapacitorPosturlPlugin extends Plugin {
                 @Override
                 public void pageLoaded() {
                     notifyListeners("browserPageLoaded", new JSObject());
+                    if (options.getPluginCall() != null) {
+                        options.getPluginCall().resolve();
+                    }
                 }
 
                 @Override
@@ -209,8 +274,7 @@ public class CapacitorPosturlPlugin extends Plugin {
             }
         }
 
-        final byte[] postDataBytes = postDataStringBuilder.toString().getBytes();
-        return postDataBytes;
+        return postDataStringBuilder.toString().getBytes();
     }
 
     @NonNull
@@ -220,23 +284,7 @@ public class CapacitorPosturlPlugin extends Plugin {
         for (Map.Entry<String, String> header : headers.entrySet()) {
             requestBuilder.addHeader(header.getKey(), header.getValue());
         }
-        Request request = requestBuilder.build();
-        return request;
-    }
-
-    @NonNull
-    private static String getCookieString(Response response, Request request) {
-        List<Cookie> cookies = Cookie.parseAll(request.url(), response.headers());
-        StringBuilder cookieString = new StringBuilder();
-        for (int i = 0; i < cookies.size(); i++) {
-            if (i > 0) {
-                cookieString.append("; ");
-            }
-            cookieString.append(cookies.get(i).name()).append("=").append(cookies.get(i).value());
-        }
-
-        final String finalCookieString = cookieString.toString();
-        return finalCookieString;
+        return requestBuilder.build();
     }
 
     private WebViewDialog getWebViewDialog(Options options, Context context) {
@@ -244,4 +292,4 @@ public class CapacitorPosturlPlugin extends Plugin {
         webViewDialog.presentWebView();
         return webViewDialog;
     }
-}
+} 
