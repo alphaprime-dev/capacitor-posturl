@@ -331,7 +331,8 @@ public class WebViewDialog extends Dialog {
     }
     if (result == 0) {
       float density = getContext().getResources().getDisplayMetrics().density;
-      result = (int)(24 * density);
+      int FALLBACK_STATUS_BAR_HEIGHT = 24;
+      result = (int)(FALLBACK_STATUS_BAR_HEIGHT * density);
     }
     return result;
   }
@@ -344,7 +345,8 @@ public class WebViewDialog extends Dialog {
     }
     if (result == 0) {
       float density = getContext().getResources().getDisplayMetrics().density;
-      result = (int)(48 * density);
+      int FALLBACK_NAVIGATION_BAR_HEIGHT = 48;
+      result = (int)(FALLBACK_NAVIGATION_BAR_HEIGHT * density);
     }
     return result;
   }
