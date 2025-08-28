@@ -106,6 +106,7 @@ public class CapacitorPosturlPlugin: CAPPlugin, WKNavigationDelegate {
         }
         self.isPresentAfterPageLoad = options["isPresentAfterPageLoad"] as? Bool ?? false
         let showReloadButton = options["showReloadButton"] as? Bool ?? false
+        let useFullScreen = options["useFullScreen"] as? Bool ?? false
 
         DispatchQueue.main.async {
             if self.isPresentAfterPageLoad {
@@ -143,7 +144,15 @@ public class CapacitorPosturlPlugin: CAPPlugin, WKNavigationDelegate {
             self.navigationWebViewController?.toolbar.isTranslucent = false
             self.navigationWebViewController?.navigationBar.backgroundColor = backgroundColor
             self.navigationWebViewController?.toolbar.backgroundColor = backgroundColor
-            self.navigationWebViewController?.modalPresentationStyle = .fullScreen
+            if useFullScreen {
+                self.navigationWebViewController?.modalPresentationStyle = .fullScreen
+            } else {
+                if #available(iOS 13.0, *) {
+                    self.navigationWebViewController?.modalPresentationStyle = .pageSheet
+                } else {
+                    self.navigationWebViewController?.modalPresentationStyle = .formSheet
+                }
+            }
             if toolbarType == "blank" {
                 self.navigationWebViewController?.navigationBar.isHidden = true
             }
