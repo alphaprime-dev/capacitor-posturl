@@ -43,11 +43,6 @@ public class WebViewDialog extends Dialog {
   public void presentWebView() {
     requestWindowFeature(Window.FEATURE_NO_TITLE);
     setCancelable(true);
-    getWindow()
-      .setFlags(
-        WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        WindowManager.LayoutParams.FLAG_FULLSCREEN
-      );
     setContentView(com.capacitor.posturl.R.layout.activity_browser);
     getWindow()
       .setLayout(
@@ -56,6 +51,15 @@ public class WebViewDialog extends Dialog {
       );
 
     this._webView = findViewById(com.capacitor.posturl.R.id.browser_view);
+
+    int statusBarPx = getStatusBarHeight();
+    int navBarPx = getNavigationBarHeight();
+
+    android.view.ViewGroup.MarginLayoutParams params = 
+        (android.view.ViewGroup.MarginLayoutParams) _webView.getLayoutParams();
+    params.topMargin = statusBarPx;
+    params.bottomMargin = navBarPx;
+    _webView.setLayoutParams(params);
 
     _webView.getSettings().setJavaScriptEnabled(true);
     _webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
@@ -304,5 +308,31 @@ public class WebViewDialog extends Dialog {
     } else {
       super.onBackPressed();
     }
+  }
+
+  private int getStatusBarHeight() {
+    int result = 0;
+    int resourceId = getContext().getResources().getIdentifier("status_bar_height", "dimen", "android");
+    if (resourceId > 0) {
+      result = getContext().getResources().getDimensionPixelSize(resourceId);
+    }
+    if (result == 0) {
+      float density = getContext().getResources().getDisplayMetrics().density;
+      result = (int)(24 * density);
+    }
+    return result;
+  }
+
+  private int getNavigationBarHeight() {
+    int result = 0;
+    int resourceId = getContext().getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+    if (resourceId > 0) {
+      result = getContext().getResources().getDimensionPixelSize(resourceId);
+    }
+    if (result == 0) {
+      float density = getContext().getResources().getDisplayMetrics().density;
+      result = (int)(48 * density);
+    }
+    return result;
   }
 }
