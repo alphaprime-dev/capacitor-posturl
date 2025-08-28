@@ -44,6 +44,7 @@ public class WebViewDialog extends Dialog {
     requestWindowFeature(Window.FEATURE_NO_TITLE);
     setCancelable(true);
     
+    // Set FLAG_FULLSCREEN for Android 14 and below
     if (android.os.Build.VERSION.SDK_INT < 35) {
       getWindow()
         .setFlags(
@@ -61,6 +62,7 @@ public class WebViewDialog extends Dialog {
 
     this._webView = findViewById(com.capacitor.posturl.R.id.browser_view);
 
+    // Android 15+ EdgeToEdge support
     if (android.os.Build.VERSION.SDK_INT >= 35) {
       int statusBarPx = getStatusBarHeight();
       int navBarPx = getNavigationBarHeight();
