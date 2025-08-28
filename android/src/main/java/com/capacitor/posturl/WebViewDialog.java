@@ -43,6 +43,15 @@ public class WebViewDialog extends Dialog {
   public void presentWebView() {
     requestWindowFeature(Window.FEATURE_NO_TITLE);
     setCancelable(true);
+    
+    if (android.os.Build.VERSION.SDK_INT < 35) {
+      getWindow()
+        .setFlags(
+          WindowManager.LayoutParams.FLAG_FULLSCREEN,
+          WindowManager.LayoutParams.FLAG_FULLSCREEN
+        );
+    }
+    
     setContentView(com.capacitor.posturl.R.layout.activity_browser);
     getWindow()
       .setLayout(
@@ -52,14 +61,16 @@ public class WebViewDialog extends Dialog {
 
     this._webView = findViewById(com.capacitor.posturl.R.id.browser_view);
 
-    int statusBarPx = getStatusBarHeight();
-    int navBarPx = getNavigationBarHeight();
+    if (android.os.Build.VERSION.SDK_INT >= 35) {
+      int statusBarPx = getStatusBarHeight();
+      int navBarPx = getNavigationBarHeight();
 
-    android.view.ViewGroup.MarginLayoutParams params = 
-        (android.view.ViewGroup.MarginLayoutParams) _webView.getLayoutParams();
-    params.topMargin = statusBarPx;
-    params.bottomMargin = navBarPx;
-    _webView.setLayoutParams(params);
+      android.view.ViewGroup.MarginLayoutParams params = 
+          (android.view.ViewGroup.MarginLayoutParams) _webView.getLayoutParams();
+      params.topMargin = statusBarPx;
+      params.bottomMargin = navBarPx;
+      _webView.setLayoutParams(params);
+    }
 
     _webView.getSettings().setJavaScriptEnabled(true);
     _webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
