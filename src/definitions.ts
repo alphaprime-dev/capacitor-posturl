@@ -135,13 +135,6 @@ export interface OpenWebViewOptions {
    * @default false
    */
   showArrow?: boolean;
-  /**
-   * useFullScreen: if true modal will be presented as fullScreen (may cause height issues on main webview), if false as pageSheet/formSheet
-   *
-   * @since 0.3.4
-   * @default false
-   */
-  useFullScreen?: boolean;
 }
 
 
