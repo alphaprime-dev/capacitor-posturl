@@ -9,6 +9,8 @@ npm install capacitor-posturl
 npx cap sync
 ```
 
+On Capacitor 8 projects configured for Swift Package Manager, `npx cap sync ios` adds the plugin as a Swift package. This requires iOS 15 or later.
+
 ## API
 
 <docgen-index>

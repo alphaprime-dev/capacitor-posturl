@@ -2,7 +2,13 @@ import Foundation
 import Capacitor
 
 @objc(CapacitorPosturlPlugin)
-public class CapacitorPosturlPlugin: CAPPlugin, WKNavigationDelegate {
+public class CapacitorPosturlPlugin: CAPPlugin, CAPBridgedPlugin, WKNavigationDelegate {
+    public let identifier = "CapacitorPosturlPlugin"
+    public let jsName = "CapacitorPosturl"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "posturl", returnType: CAPPluginReturnPromise)
+    ]
+
     private var urlString: String?
     private var callbackUrl: URL?
     
